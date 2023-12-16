@@ -8,9 +8,9 @@ userPort = serial.Serial('/dev/ttyACM0', 115200) # User Port
 dataPort = serial.Serial('/dev/ttyACM1', 921600)
 
 
-userPort.write(b'%\n')
-msg = userPort.read(11) #This methods reads up to 11 characters which are the characters for "\nmmwDemo:/>"
-print(msg)
+# userPort.write(b'%\n')
+# msg = userPort.read(11) #This methods reads up to 11 characters which are the characters for "\nmmwDemo:/>"
+# print(msg)
 
 try:
     with open(PROFILE_PATH, 'r') as file:
@@ -26,7 +26,10 @@ else:
         s = userPort.read(byteCount)
         print(s)
     
-    userPort.write(b'sensorStart')
+    userPort.write(b'\n') # We add this \n since the startSensor instruction in the .cfg file doesn't have one 
+    byteCount = userPort.inWaiting()
+    s = userPort.read(byteCount)
+    print(s)
 
     while True:
         byteCount = dataPort.inWaiting()
