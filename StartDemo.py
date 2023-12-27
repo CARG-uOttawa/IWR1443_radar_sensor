@@ -2,6 +2,7 @@ import serial
 import time
 import numpy as np
 from UARTParser import UartParser as up
+import pandas as pd
 
 
 if __name__ == "__main__":
@@ -17,12 +18,12 @@ if __name__ == "__main__":
         print("Configuration was opened successfully")
 
     except Exception as e:
-        print("The Configuration File '" + PROFILE_PATH + "' was not found")
+        print("The Configuration File '" + PROFILE_PATH + "' was not found:", e)
 
     else:
         print("Loading Configuration to board")
         for line in lines:
-            time.sleep(0.001)
+            time.sleep(0.1) #We can test for different values here for sleep. This is just a guess
             userPort.write(line.encode('utf-8'))
             byteCount = userPort.inWaiting()
             s = userPort.read(byteCount)
@@ -42,18 +43,27 @@ if __name__ == "__main__":
                 if s.any():
                     data = np.concatenate((data, s), axis=0)
 
-        except KeyboardInterrupt:
-            print("\nData read successfully")
+        except KeyboardInterrupt as e:
+            print("\nData read successfully:", e)
 
-        except Exception:
-            print("An error occurred while reading the Data")
+        except Exception as e:
+            print("An error occurred while reading the Data:", e)
         try:
             print("Processing Data")
             indices = up.searchMagicWord(data)
-            objectData = []
+            objectData = pd.DataFrame(columns = ["Time", "X", "Y", "Z"])
             for index in range(indices.size-2):
-                objectData.append(up.convertData(data[indices[index]:indices[index+1]]))
-            print("Data was processed")
+                structures = up.convertData(data[indices[index]:indices[index+1]])
+                for structure in structures:
+                    objectData = pd.concat([objectData, structure.getDataFrame()])
 
-        except Exception:
-            print("An error occurred while processing the Data")
+
+            print("Data was processed")
+        except Exception as e:
+            print("An error occurred while processing the Data:", e)
+        
+        try:
+            print("Saving Data")
+            objectData.to_csv("Data.csv")
+        except Exception as e:
+            print("An error occured while saving the Data:", e)
